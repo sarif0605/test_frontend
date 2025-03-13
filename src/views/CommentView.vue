@@ -34,12 +34,14 @@
   import { customeApi } from '@/api';
   import { useAuthStore } from '@/stores/AuthStore';
   
+import { useToast } from "vue-toast-notification";
   const authStore = useAuthStore();
   const router = useRouter();
   const route = useRoute();
   const review = ref('');
   const critic = ref('');
   const rating = ref(3);
+  const $toast = useToast();
 
   console.log(route.params.id)
   
@@ -65,9 +67,14 @@
         Authorization: `Bearer ${authStore.userToken}`,
       },
     });
+    $toast.success("Berhasil Melakukan Komentar!", {
+        position: "top-right",
+      });
       router.push({ name: 'Home' });
     } catch (error) {
-      console.error('Failed to submit review:', error);
+      $toast.error("Gagal Melakukan Komentar!", {
+        position: "top-right",
+      });
     }
   };
   

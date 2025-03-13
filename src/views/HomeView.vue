@@ -90,7 +90,9 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
 import { useAuthStore } from '@/stores/AuthStore';
 import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useToast } from "vue-toast-notification";
 
+const $toast = useToast();
 const authStore = useAuthStore();
 const dataContent = ref([]);
 const dataCategory = ref([]);
@@ -119,8 +121,13 @@ const submitFavorite = async (id) => {
         Authorization : `Bearer ${authStore.userToken}`
       }
     });
+    $toast.success("Berhasil Tambah Kemenu Favorite!", {
+        position: "top-right",
+      });
   }catch(e) {
-    console.log(e)
+    $toast.error("Gagal Tambah Kemenu Favorit!", {
+        position: "top-right",
+      });
   } finally {
     authStore.isLoading = false;
   }

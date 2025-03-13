@@ -1,7 +1,7 @@
 <template>
   <section class="mx-auto max-w-6xl p-4 mt-16">
     <h1 class="text-3xl font-bold mb-6 text-center animate-fade-in">Favorite</h1>
-    
+
     <LoadingComponent v-if="authStore.isLoading" />
 
     <div v-else-if="dataContent.length < 1" class="text-center text-gray-500 animate-fade-in">
@@ -27,22 +27,32 @@
           <p>{{ data.content.content.substring(0, 20) }}...</p>
           <p>By. {{ data.user?.name || 'User ID: ' + data.user_id }}</p>
           <p>{{ new Date(data.created_at).toLocaleDateString() }}</p>
-          
-          <div class="card-actions flex gap-2">
+
+          <div class="card-actions flex justify-center gap-2">
             <RouterLink 
               :to="{ name: 'ContentId', params: { id: data.content.id } }" 
-              class="btn btn-primary"
+              class="btn btn-primary btn-sm sm:btn-md"
             >
               Lihat
             </RouterLink>
-            <button @click="deleteFavorite(data.id)" class="btn btn-error">
-              Delete
+            <button
+              class="btn btn-accent btn-sm sm:btn-md"
+              @click="openDeleteDialog(data)"
+            >
+              <i class="pi pi-trash"></i>
             </button>
           </div>
         </div>
       </div>
     </div>
   </section>
+
+  <DeleteComponent
+    :visible="deleteDialogVisible"
+    :itemName="selectedFavorite?.content?.title"
+    @update:visible="deleteDialogVisible = $event"
+    @confirmDelete="deleteFavorite"
+  />
 </template>
 
 <script setup>
@@ -51,16 +61,21 @@ import LoadingComponent from '@/components/LoadingComponent.vue';
 import { useAuthStore } from '@/stores/AuthStore';
 import { onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
+import { useToast } from "vue-toast-notification";
+import DeleteComponent from '@/components/DeleteComponent.vue';
 
+const $toast = useToast();
 const authStore = useAuthStore();
 const dataContent = ref([]);
+const deleteDialogVisible = ref(false);
+const selectedFavorite = ref(null);
 
 const getAll = async () => {
   try {
     authStore.isLoading = true;
     const { data } = await customeApi.get('/get-favorite', {
       headers: {
-          Authorization: `Bearer ${authStore.userToken}`,
+        Authorization: `Bearer ${authStore.userToken}`,
       },
     });
     dataContent.value = data.data;
@@ -71,17 +86,31 @@ const getAll = async () => {
   }
 };
 
-const deleteFavorite = async (id) => {
+const openDeleteDialog = (favorite) => {
+  selectedFavorite.value = favorite;
+  deleteDialogVisible.value = true;
+};
+
+const deleteFavorite = async () => {
+  if (!selectedFavorite.value) return;
+
   try {
-    await customeApi.delete(`remove-favorite`, {
-      data: { content_id: id },
+    await customeApi.delete('/remove-favorite', {
+      data: { content_id: selectedFavorite.value.content.id },
       headers: {
         Authorization: `Bearer ${authStore.userToken}`,
       },
     });
-    dataContent.value = dataContent.value.filter(item => item.id !== id);
+
+    $toast.success("Berhasil Menghapus Daftar Favorit!", { position: "top-right" });
+
+    dataContent.value = dataContent.value.filter(
+      item => item.content.id !== selectedFavorite.value.content.id
+    );
+
+    deleteDialogVisible.value = false;
   } catch (error) {
-    console.error('Error deleting favorite:', error);
+    $toast.error("Gagal Menghapus Daftar Favorit!", { position: "top-right" });
   }
 };
 

@@ -67,7 +67,9 @@ import { ref, onMounted, watch, computed } from 'vue';
 import { useAuthStore } from '@/stores/AuthStore';
 import { customeApi } from '@/api';
 import LoadingComponent from '@/components/LoadingComponent.vue';
+import { useToast } from "vue-toast-notification";
 
+const $toast = useToast();
 const authStore = useAuthStore();
 const dataContent = ref([]);
 const searchQuery = ref('');
@@ -107,15 +109,20 @@ const fetchContent = async () => {
 const submitFavorite = async (id) => {
   authStore.isLoading = true;
   try {
-    await customeApi.get('/add-favorite',{
+    await customeApi.post('/add-favorite',{
       "content_id" : id
     }, {
       headers : {
         Authorization : `Bearer ${authStore.userToken}`
       }
     });
+    $toast.success("Berhasil Tmabah Kemenu Favorit!", {
+        position: "top-right",
+      });
   }catch(e) {
-    console.log(e)
+    $toast.error("Gagal Tambah Kemenu Favorit!", {
+        position: "top-right",
+      });
   } finally {
     authStore.isLoading = false;
   }
